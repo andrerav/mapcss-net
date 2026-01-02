@@ -2,7 +2,7 @@
 param(
     # Output directory for generated C# sources (relative to this script by default)
     [Parameter()]
-    [string]$OutputDir = "./../src/MapCss.Parser/Generated",
+    [string]$OutputDir = "./../src/MapCss/Parser",
 
     # ANTLR tool version to use
     [Parameter()]

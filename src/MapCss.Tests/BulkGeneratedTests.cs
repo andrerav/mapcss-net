@@ -8,7 +8,7 @@ using NUnit.Framework;
 using MapCss.Parser;
 using MapCss.Styling;
 
-namespace MapCss.Styling.Tests
+namespace MapCss.Tests
 {
 	/**
 	 * BulkGeneratedTests

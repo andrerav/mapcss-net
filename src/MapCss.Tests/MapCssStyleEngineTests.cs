@@ -5,7 +5,7 @@ using System.Linq;
 using System.IO;
 using MapCss.Styling;
 
-namespace MapCss.Styling.Tests
+namespace MapCss.Tests
 {
     [TestFixture]
     public class MapCssStyleEngineTests

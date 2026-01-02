@@ -20,12 +20,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Using Include="NUnit.Framework" />
+    <ProjectReference Include="..\MapCss\MapCss.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-	  <ProjectReference Include="..\MapCss.Parser\MapCss.Parser.csproj" />
-	  <ProjectReference Include="..\MapCss.Styling\MapCss.Styling.csproj" />
+    <Using Include="NUnit.Framework" />
   </ItemGroup>
 
 </Project>

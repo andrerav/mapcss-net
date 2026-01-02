@@ -1,5 +1,5 @@
 # Runs tests with coverage collection and generates reports (HTML + text summary)
-$proj = "src\MapCss.Styling.Tests\MapCss.Styling.Tests.csproj"
+$proj = "src\MapCss.Tests\MapCss.Tests.csproj"
 $resultsDir = "tools\tmp\TestResults"
 $reportDir = "tools\tmp\coverage-report"
 

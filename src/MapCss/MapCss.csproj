@@ -1,10 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <ItemGroup>
-    <ProjectReference Include="..\MapCss.Styling\MapCss.Styling.csproj" />
-    <ProjectReference Include="..\MapCss.Parser\MapCss.Parser.csproj" />
-  </ItemGroup>
-
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -18,4 +12,7 @@
     <RepositoryUrl>https://github.com/andrerav/mapcss-net/</RepositoryUrl>
     <Authors>Andreas Ravnestad</Authors> 
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Antlr4.Runtime.Standard" Version="4.13.1" />
+  </ItemGroup>
 </Project>
