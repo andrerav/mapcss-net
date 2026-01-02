@@ -1,3 +1,6 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
 namespace MapCss.Styling;
 
 /// <summary>
@@ -177,4 +180,14 @@ public sealed class MapCssStyleLayer
 /// Values are kept as text in the AST and interpretation (e.g. parsing colors or numbers)
 /// is performed when required by the rendering/evaluation logic.
 /// </remarks>
+[JsonConverter(typeof(MapCssValueJsonConverter))]
 public sealed record MapCssValue(string Text);
+
+public sealed class MapCssValueJsonConverter : JsonConverter<MapCssValue>
+{
+	public override MapCssValue Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+		=> new(reader.GetString() ?? string.Empty);
+
+	public override void Write(Utf8JsonWriter writer, MapCssValue value, JsonSerializerOptions options)
+		=> writer.WriteStringValue(value.Text);
+}
