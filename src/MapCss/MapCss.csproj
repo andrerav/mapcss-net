@@ -17,5 +17,6 @@
     <IncludeReferencedProjects>true</IncludeReferencedProjects>
     <RepositoryUrl>https://github.com/andrerav/mapcss-net/</RepositoryUrl>
     <Authors>Andreas Ravnestad</Authors> 
+    <license type="expression">MIT</license>
   </PropertyGroup>
 </Project>
