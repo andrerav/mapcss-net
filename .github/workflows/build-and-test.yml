@@ -81,6 +81,9 @@ jobs:
           stable_tag=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
           if [ -z "$stable_tag" ]; then
             base="0.0.1"
+
+            root_commit=$(git rev-list --max-parents=0 HEAD | tail -n 1)
+            basepoint="$root_commit"
           else
             version=$(echo "$stable_tag" | sed 's/^v//')
             major=$(echo "$version" | cut -d. -f1)
@@ -89,9 +92,17 @@ jobs:
             minor=$((minor + 1))
             patch=0
             base="${major}.${minor}.${patch}"
+
+            stable_commit=$(git rev-list -n 1 "$stable_tag")
+            basepoint=$(git merge-base HEAD "$stable_commit")
           fi
 
-          prerelease="${base}-preview.${{ github.run_number }}"
+          count=$(git rev-list --count "${basepoint}..HEAD")
+          if [ "$count" -lt 1 ]; then
+            count=1
+          fi
+
+          prerelease="${base}-preview.${count}"
           echo "Prerelease version: $prerelease"
           echo "package_version=$prerelease" >> $GITHUB_ENV
 
