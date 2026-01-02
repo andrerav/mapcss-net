@@ -15,6 +15,7 @@
     <PackageTags>mapcss;osm;josm;parser;styling</PackageTags>
     <IsPackable>true</IsPackable>
     <IncludeReferencedProjects>true</IncludeReferencedProjects>
+    <RepositoryUrl>https://github.com/andrerav/mapcss-net/</RepositoryUrl>
+    <Authors>Andreas Ravnestad</Authors> 
   </PropertyGroup>
-
 </Project>
