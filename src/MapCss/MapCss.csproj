@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\MapCss.Styling\MapCss.Styling.csproj" />
+    <ProjectReference Include="..\MapCss.Parser\MapCss.Parser.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>MapCSS.NET</PackageId>
+    <Title>MapCSS.NET</Title>
+    <Description>MapCSS parser and styling engine for .NET.</Description>
+    <PackageTags>mapcss;osm;josm;parser;styling</PackageTags>
+    <IsPackable>true</IsPackable>
+    <IncludeReferencedProjects>true</IncludeReferencedProjects>
+  </PropertyGroup>
+
+</Project>
