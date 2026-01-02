@@ -1,0 +1,1 @@
+These files are copied from https://github.com/OpenNauticalChart/josm and are used for integration tests only. 
