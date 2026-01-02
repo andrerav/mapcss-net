@@ -19,6 +19,9 @@ permissions:
 
 jobs:
   build-and-test:
+    defaults:
+      run:
+        working-directory: src
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
