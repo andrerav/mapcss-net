@@ -8,7 +8,7 @@ using NUnit.Framework;
 using MapCss.Parser;
 using MapCss.Styling;
 
-namespace MapCss.Styling.Tests
+namespace MapCss.Tests
 {
 	/**
 	 * BulkGeneratedTests
@@ -196,7 +196,7 @@ namespace MapCss.Styling.Tests
 			{
 				Assert.That(layer, Is.Not.Null);
 				Assert.That(layer.Properties.ContainsKey("color"));
-				Assert.That(layer.Properties["color"][0].Text, Is.EqualTo(expectedColor));
+				Assert.That(layer.Properties["color"][0], Is.EqualTo(expectedColor));
 			}
 		}
 

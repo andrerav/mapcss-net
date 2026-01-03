@@ -54,13 +54,93 @@ jobs:
       - name: Test
         run: dotnet test MapCss.NET.slnx --no-build --configuration Release --verbosity normal
 
-  version-and-tag:
-    name: Bump version and tag
+  prerelease:
+    name: Publish prerelease (develop)
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'develop') && github.actor != 'github-actions[bot]' }}
+    if: ${{ github.event_name == 'push' && github.ref_name == 'develop' && github.actor != 'github-actions[bot]' }}
+    permissions:
+      contents: read
+
+    defaults:
+      run:
+        working-directory: src
+
+    steps:
+      - name: Checkout repository (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch tags
+        run: git fetch --tags
+
+      - name: Compute prerelease version
+        id: ver
+        run: |
+          stable_tag=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
+          if [ -z "$stable_tag" ]; then
+            base="0.0.1"
+
+            root_commit=$(git rev-list --max-parents=0 HEAD | tail -n 1)
+            basepoint="$root_commit"
+          else
+            version=$(echo "$stable_tag" | sed 's/^v//')
+            major=$(echo "$version" | cut -d. -f1)
+            minor=$(echo "$version" | cut -d. -f2)
+            patch=$(echo "$version" | cut -d. -f3)
+            minor=$((minor + 1))
+            patch=0
+            base="${major}.${minor}.${patch}"
+
+            stable_commit=$(git rev-list -n 1 "$stable_tag")
+            basepoint=$(git merge-base HEAD "$stable_commit")
+          fi
+
+          count=$(git rev-list --count "${basepoint}..HEAD")
+          if [ "$count" -lt 1 ]; then
+            count=1
+          fi
+
+          prerelease="${base}-preview.${count}"
+          echo "Prerelease version: $prerelease"
+          echo "package_version=$prerelease" >> $GITHUB_ENV
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Pack NuGet package
+        run: dotnet pack MapCss/MapCss.csproj --configuration Release --nologo -o ../artifacts /p:PackageVersion=${{ env.package_version }}
+
+      - name: Publish to NuGet
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if [ -z "$NUGET_API_KEY" ]; then
+            echo "NUGET_API_KEY not set; skipping NuGet publish."
+            exit 0
+          fi
+          dotnet nuget push ../artifacts/*.nupkg --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-prerelease-${{ env.package_version }}
+          path: artifacts/*.nupkg
+
+  release:
+    name: Release (main)
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' && github.ref_name == 'main' && github.actor != 'github-actions[bot]' }}
     permissions:
       contents: write
+
+    defaults:
+      run:
+        working-directory: src
 
     steps:
       - name: Checkout repository (full history)
@@ -73,59 +153,70 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Fetch Tags
+      - name: Fetch tags
         run: git fetch --tags
 
-      - name: Get Latest Tag
-        id: get_latest_tag
+      - name: Compute next stable version
+        id: ver
         run: |
-          latest_tag=$(git tag --sort=-v:refname | head -n 1)
-          if [ -z "$latest_tag" ]; then
-            latest_tag="v0.0.0"
-            had_tags="0"
+          stable_tag=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
+          if [ -z "$stable_tag" ]; then
+            next="0.0.1"
           else
-            had_tags="1"
-          fi
-          echo "Latest tag: $latest_tag"
-          echo "latest_tag=$latest_tag" >> $GITHUB_ENV
-          echo "had_tags=$had_tags" >> $GITHUB_ENV
-
-      - name: Calculate Next Version
-        id: next_version
-        run: |
-          if [ "${{ env.had_tags }}" = "0" ]; then
-            echo "No tags found; starting at v0.0.1"
-            echo "next_version=v0.0.1" >> $GITHUB_ENV
-            echo "next_version_raw=0.0.1" >> $GITHUB_ENV
-            exit 0
-          fi
-
-          version=$(echo "${{ env.latest_tag }}" | sed 's/^v//')
-          major=$(echo "$version" | cut -d. -f1)
-          minor=$(echo "$version" | cut -d. -f2)
-          patch=$(echo "$version" | cut -d. -f3)
-
-          if [ "${{ github.ref_name }}" = "main" ]; then
+            version=$(echo "$stable_tag" | sed 's/^v//')
+            major=$(echo "$version" | cut -d. -f1)
+            minor=$(echo "$version" | cut -d. -f2)
+            patch=$(echo "$version" | cut -d. -f3)
             minor=$((minor + 1))
             patch=0
-          elif [ "${{ github.ref_name }}" = "develop" ]; then
-            patch=$((patch + 1))
-          else
-            echo "Unexpected branch: ${{ github.ref_name }}" >&2
-            exit 1
+            next="${major}.${minor}.${patch}"
           fi
 
-          next_version="v${major}.${minor}.${patch}"
-          next_version_raw="${major}.${minor}.${patch}"
-          echo "Next version: $next_version"
-          echo "next_version=$next_version" >> $GITHUB_ENV
-          echo "next_version_raw=$next_version_raw" >> $GITHUB_ENV
+          tag="v${next}"
+          echo "Next stable tag: $tag"
+          echo "tag=$tag" >> $GITHUB_ENV
+          echo "package_version=$next" >> $GITHUB_ENV
 
-      - name: Tag the New Version
+      - name: Create and push tag
+        id: tag
         run: |
-          if git rev-parse "${{ env.next_version }}" >/dev/null 2>&1; then
-            echo "Tag already exists: ${{ env.next_version }}"
+          if git rev-parse "${{ env.tag }}" >/dev/null 2>&1; then
+            echo "Tag already exists: ${{ env.tag }}"
+            echo "created=false" >> $GITHUB_OUTPUT
             exit 0
           fi
-          git tag "${{ env.next_version }}"
-          git push origin "${{ env.next_version }}"
+          git tag "${{ env.tag }}"
+          git push origin "${{ env.tag }}"
+          echo "created=true" >> $GITHUB_OUTPUT
+
+      - name: Setup .NET SDK
+        if: ${{ steps.tag.outputs.created == 'true' }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Pack NuGet package
+        if: ${{ steps.tag.outputs.created == 'true' }}
+        run: dotnet pack MapCss/MapCss.csproj --configuration Release --nologo -o ../artifacts /p:PackageVersion=${{ env.package_version }}
+
+      - name: Publish to NuGet
+        if: ${{ steps.tag.outputs.created == 'true' }}
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if [ -z "$NUGET_API_KEY" ]; then
+            echo "NUGET_API_KEY not set; skipping NuGet publish."
+            exit 0
+          fi
+          dotnet nuget push ../artifacts/*.nupkg --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Create GitHub Release
+        if: ${{ steps.tag.outputs.created == 'true' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.tag }}
+          name: ${{ env.tag }}
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            artifacts/*.nupkg

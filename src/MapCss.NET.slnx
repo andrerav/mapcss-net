@@ -1,5 +1,4 @@
 <Solution>
-  <Project Path="MapCss.Parser/MapCss.Parser.csproj" />
-  <Project Path="MapCss.Styling.Tests/MapCss.Styling.Tests.csproj" />
-  <Project Path="MapCss.Styling/MapCss.Styling.csproj" />
+  <Project Path="MapCss.Tests/MapCss.Tests.csproj" />
+  <Project Path="MapCss/MapCss.csproj" />
 </Solution>

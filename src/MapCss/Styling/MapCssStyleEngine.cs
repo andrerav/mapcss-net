@@ -90,7 +90,7 @@ internal sealed class MapCssEvaluationState
 {
 	private readonly MapCssQuery _query;
 	private readonly HashSet<string> _classes;
-	private readonly Dictionary<string, Dictionary<string, IReadOnlyList<MapCssValue>>> _layers;
+	private readonly Dictionary<string, Dictionary<string, IReadOnlyList<string>>> _layers;
 
 	/// <summary>
 	/// Create a new evaluation state for the specified query.
@@ -100,7 +100,7 @@ internal sealed class MapCssEvaluationState
 	{
 		_query = query;
 		_classes = new HashSet<string>(_query.Context.Element.Classes, StringComparer.Ordinal);
-		_layers = new Dictionary<string, Dictionary<string, IReadOnlyList<MapCssValue>>>(StringComparer.OrdinalIgnoreCase);
+		_layers = new Dictionary<string, Dictionary<string, IReadOnlyList<string>>>(StringComparer.OrdinalIgnoreCase);
 	}
 
 	/// <summary>
@@ -160,18 +160,18 @@ internal sealed class MapCssEvaluationState
 		{
 			if (!_layers.TryGetValue(subpart, out var properties))
 			{
-				properties = new Dictionary<string, IReadOnlyList<MapCssValue>>(StringComparer.OrdinalIgnoreCase);
+				properties = new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
 				_layers[subpart] = properties;
 			}
 
 			// Evaluate expressions in property values using the current query context
-			var evaluated = new List<MapCssValue>();
+			var evaluated = new List<string>();
 			foreach (var v in propertyDeclaration.Values)
 			{
 				try
 				{
-					var text = ExpressionEvaluator.Evaluate(v.Text, _query);
-					evaluated.Add(new MapCssValue(text));
+					var text = ExpressionEvaluator.Evaluate(v, _query);
+					evaluated.Add(text);
 				}
 				catch
 				{
@@ -197,7 +197,7 @@ internal sealed class MapCssEvaluationState
 		var layers = new Dictionary<string, MapCssStyleLayer>(StringComparer.OrdinalIgnoreCase);
 		foreach (var (subpart, props) in _layers)
 		{
-			layers[subpart] = new MapCssStyleLayer(new ReadOnlyDictionary<string, IReadOnlyList<MapCssValue>>(props));
+			layers[subpart] = new MapCssStyleLayer(new ReadOnlyDictionary<string, IReadOnlyList<string>>(props));
 		}
 
 		return new MapCssStyleResult(

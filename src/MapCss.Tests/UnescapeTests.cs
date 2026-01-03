@@ -1,7 +1,7 @@
 using MapCss.Styling;
 using NUnit.Framework;
 
-namespace MapCss.Styling.Tests
+namespace MapCss.Tests
 {
 	public class UnescapeTests
 	{

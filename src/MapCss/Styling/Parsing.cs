@@ -62,7 +62,7 @@ internal static class MapCssAstBuilder
 	public static MapCssStylesheet Build(MapCssParser.StylesheetContext context, CommonTokenStream tokens)
 	{
 		var rules = new List<MapCssRuleSet>();
-		var meta = new Dictionary<string, IReadOnlyList<MapCssValue>>(StringComparer.OrdinalIgnoreCase);
+		var meta = new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
 
 		foreach (var statement in context.statement())
 		{
@@ -84,7 +84,7 @@ internal static class MapCssAstBuilder
 	private static void ParseMetaBlock(
 		MapCssParser.MetaBlockContext metaBlock,
 		CommonTokenStream tokens,
-		Dictionary<string, IReadOnlyList<MapCssValue>> meta)
+		Dictionary<string, IReadOnlyList<string>> meta)
 	{
 		if (metaBlock.block() is not { } block)
 		{
@@ -154,10 +154,10 @@ internal static class MapCssAstBuilder
 		CommonTokenStream tokens)
 	{
 		var name = declaration.propertyName().GetText();
-		var values = new List<MapCssValue>();
+		var values = new List<string>();
 		foreach (var expr in declaration.valueList().expr())
 		{
-			values.Add(new MapCssValue(GetText(tokens, expr)));
+			values.Add(GetText(tokens, expr));
 		}
 
 		return new MapCssPropertyDeclaration(name, values);
@@ -665,14 +665,14 @@ internal sealed class MapCssStylesheet
 {
 	public MapCssStylesheet(
 		IReadOnlyList<MapCssRuleSet> rules,
-		IReadOnlyDictionary<string, IReadOnlyList<MapCssValue>> meta)
+		IReadOnlyDictionary<string, IReadOnlyList<string>> meta)
 	{
 		Rules = rules;
 		Meta = meta;
 	}
 
 	public IReadOnlyList<MapCssRuleSet> Rules { get; }
-	public IReadOnlyDictionary<string, IReadOnlyList<MapCssValue>> Meta { get; }
+	public IReadOnlyDictionary<string, IReadOnlyList<string>> Meta { get; }
 }
 
 internal sealed class MapCssRuleSet
@@ -734,7 +734,7 @@ internal abstract record MapCssDeclaration;
 
 internal sealed record MapCssSetDeclaration(IReadOnlyList<string> Classes) : MapCssDeclaration;
 
-internal sealed record MapCssPropertyDeclaration(string Name, IReadOnlyList<MapCssValue> Values) : MapCssDeclaration;
+internal sealed record MapCssPropertyDeclaration(string Name, IReadOnlyList<string> Values) : MapCssDeclaration;
 
 internal sealed record MapCssAttributeTest(
 	string Key,

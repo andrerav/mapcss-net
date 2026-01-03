@@ -5,7 +5,7 @@ using System.Linq;
 using System.IO;
 using MapCss.Styling;
 
-namespace MapCss.Styling.Tests
+namespace MapCss.Tests
 {
     [TestFixture]
     public class MapCssStyleEngineTests
@@ -22,14 +22,14 @@ namespace MapCss.Styling.Tests
             if (!result.Layers.TryGetValue(layer, out var l)) return null;
             if (!l.Properties.TryGetValue(property, out var values)) return null;
             if (values.Count <= index) return null;
-            return values[index].Text;
+            return values[index];
         }
 
         private static IReadOnlyList<string>? GetPropertyList(MapCssStyleResult result, string layer, string property)
         {
             if (!result.Layers.TryGetValue(layer, out var l)) return null;
             if (!l.Properties.TryGetValue(property, out var values)) return null;
-            return values.Select(v => v.Text).ToArray();
+            return values.ToArray();
         }
 
         // Basic smoke tests (kept for clarity)
