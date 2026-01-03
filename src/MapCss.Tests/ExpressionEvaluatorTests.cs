@@ -19,9 +19,9 @@ namespace MapCss.Tests
 			var res = engine.Evaluate(q);
 			var props = res.Layers[string.Empty].Properties;
 			Assert.That(props.ContainsKey("foo"));
-			Assert.That(props["foo"][0].Text, Is.EqualTo("ab"));
+			Assert.That(props["foo"][0], Is.EqualTo("ab"));
 			Assert.That(props.ContainsKey("bar"));
-			Assert.That(props["bar"][0].Text, Is.EqualTo("2"));
+			Assert.That(props["bar"][0], Is.EqualTo("2"));
 			// Direct evaluation sanity-check
 			var direct = ExpressionEvaluator.Evaluate("count(split(',', 'a,b'))", q);
 			Assert.That(direct, Is.EqualTo("2"));

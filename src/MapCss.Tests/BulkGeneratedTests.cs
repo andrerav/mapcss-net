@@ -196,7 +196,7 @@ namespace MapCss.Tests
 			{
 				Assert.That(layer, Is.Not.Null);
 				Assert.That(layer.Properties.ContainsKey("color"));
-				Assert.That(layer.Properties["color"][0].Text, Is.EqualTo(expectedColor));
+				Assert.That(layer.Properties["color"][0], Is.EqualTo(expectedColor));
 			}
 		}
 
