@@ -23,6 +23,7 @@ public enum MapLibreLayerType
 public sealed class MapLibreStyleOptions
 {
 	public double? IconBaseSize { get; init; }
+	public Func<MapCssQuery, MapLibreGeometryType?>? GeometryOverride { get; init; }
 	public Func<string, bool>? TextValueIsTag { get; init; }
 }
 
@@ -133,7 +134,9 @@ public static class MapLibreStyleExtensions
 			throw new ArgumentNullException(nameof(query));
 		}
 
-		var geometry = MapGeometryFromElementType(query.Context.Element.Type);
+		options ??= new MapLibreStyleOptions();
+		var geometry = options.GeometryOverride?.Invoke(query)
+			?? MapGeometryFromElementType(query.Context.Element.Type);
 		return style.ToMapLibreStyle(geometry, options);
 	}
 
@@ -154,6 +157,8 @@ public static class MapLibreStyleExtensions
 		var symbol = new LayerBuilder(MapLibreLayerType.Symbol);
 
 		var unassignedWarnings = new List<MapLibreStyleWarning>();
+		double? iconWidth = null;
+		double? iconHeight = null;
 
 		foreach (var (rawKey, values) in layer.Properties)
 		{
@@ -179,6 +184,7 @@ public static class MapLibreStyleExtensions
 					break;
 
 				case "color":
+				case "colour":
 					if (geometry == MapLibreGeometryType.Point)
 					{
 						SetPaint(circle, "circle-color", FirstValue(values), unassignedWarnings);
@@ -225,11 +231,13 @@ public static class MapLibreStyleExtensions
 
 				case "casing-width":
 				case "casing-color":
+				case "casing-colour":
 				case "casing-opacity":
 					AddWarning(line, key, "Casing requires a separate line layer.", unassignedWarnings);
 					break;
 
 				case "fill-color":
+				case "fill-colour":
 					SetPaint(fill, "fill-color", FirstValue(values), unassignedWarnings);
 					break;
 
@@ -271,10 +279,12 @@ public static class MapLibreStyleExtensions
 					break;
 
 				case "symbol-stroke-color":
+				case "symbol-stroke-colour":
 					SetPaint(circle, "circle-stroke-color", FirstValue(values), unassignedWarnings);
 					break;
 
 				case "symbol-fill-color":
+				case "symbol-fill-colour":
 					SetPaint(circle, "circle-color", FirstValue(values), unassignedWarnings);
 					break;
 
@@ -295,22 +305,24 @@ public static class MapLibreStyleExtensions
 					break;
 
 				case "icon-width":
-				case "icon-height":
 					if (TryGetNumber(values, out var iconSize, out var iconSizeWarning))
 					{
-						if (options.IconBaseSize is > 0)
-						{
-							SetLayout(symbol, "icon-size", iconSize / options.IconBaseSize.Value, unassignedWarnings);
-						}
-						else
-						{
-							SetLayout(symbol, "icon-size", iconSize, unassignedWarnings);
-							AddWarning(symbol, key, "MapLibre icon-size expects a scale; set IconBaseSize to convert.", unassignedWarnings);
-						}
+						iconWidth = iconSize;
 					}
 					else
 					{
-						AddWarning(symbol, key, iconSizeWarning ?? "Unsupported icon size value.", unassignedWarnings);
+						AddWarning(symbol, "icon-width", iconSizeWarning ?? "Unsupported icon size value.", unassignedWarnings);
+					}
+					break;
+
+				case "icon-height":
+					if (TryGetNumber(values, out var iconHeightValue, out var iconHeightWarning))
+					{
+						iconHeight = iconHeightValue;
+					}
+					else
+					{
+						AddWarning(symbol, "icon-height", iconHeightWarning ?? "Unsupported icon size value.", unassignedWarnings);
 					}
 					break;
 
@@ -421,9 +433,11 @@ public static class MapLibreStyleExtensions
 				}
 
 				case "text-color":
+				case "text-colour":
 					SetPaint(symbol, "text-color", FirstValue(values), unassignedWarnings);
 					break;
 
+				case "text-halo-color":
 				case "text-halo-colour":
 					SetPaint(symbol, "text-halo-color", FirstValue(values), unassignedWarnings);
 					break;
@@ -511,6 +525,28 @@ public static class MapLibreStyleExtensions
 				default:
 					AddWarning(null, rawKey, "Unsupported MapCSS property.", unassignedWarnings);
 					break;
+			}
+		}
+
+		if (iconWidth is not null || iconHeight is not null)
+		{
+			var iconSize = iconWidth ?? iconHeight!.Value;
+			var iconSizeKey = iconWidth is not null ? "icon-width" : "icon-height";
+
+			if (iconWidth is not null && iconHeight is not null && iconWidth.Value != iconHeight.Value)
+			{
+				iconSize = Math.Max(iconWidth.Value, iconHeight.Value);
+				AddWarning(symbol, iconSizeKey, "MapLibre icon-size is uniform; using max(icon-width, icon-height).", unassignedWarnings);
+			}
+
+			if (options.IconBaseSize is > 0)
+			{
+				SetLayout(symbol, "icon-size", iconSize / options.IconBaseSize.Value, unassignedWarnings);
+			}
+			else
+			{
+				SetLayout(symbol, "icon-size", iconSize, unassignedWarnings);
+				AddWarning(symbol, iconSizeKey, "MapLibre icon-size expects a scale; set IconBaseSize to convert.", unassignedWarnings);
 			}
 		}
 
