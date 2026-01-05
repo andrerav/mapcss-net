@@ -24,6 +24,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Fixtures\TranslatorSample.mapcss">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Fixtures\TranslatorSample.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="NUnit.Framework" />
   </ItemGroup>
 

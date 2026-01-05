@@ -1,0 +1,78 @@
+{
+  "version": 8,
+  "layers": [
+    {
+      "id": "mapcss_0_main_symbol",
+      "type": "symbol",
+      "filter": [
+        "all",
+        [
+          "==",
+          [
+            "geometry-type"
+          ],
+          "Point"
+        ],
+        [
+          "==",
+          [
+            "get",
+            "class:lighted"
+          ],
+          true
+        ],
+        [
+          "==",
+          [
+            "get",
+            "seamark:type"
+          ],
+          "buoy"
+        ]
+      ],
+      "paint": {
+        "text-color": "blue"
+      },
+      "layout": {
+        "icon-image": "http://example/icon.svg",
+        "icon-size": 16,
+        "text-field": [
+          "get",
+          "seamark:name"
+        ]
+      },
+      "minZoom": 5
+    },
+    {
+      "id": "mapcss_1_default_line",
+      "type": "line",
+      "filter": [
+        "all",
+        [
+          "==",
+          [
+            "geometry-type"
+          ],
+          "LineString"
+        ],
+        [
+          "==",
+          [
+            "get",
+            "seamark:type"
+          ],
+          "fairway"
+        ]
+      ],
+      "paint": {
+        "line-color": "black",
+        "line-dasharray": [
+          5,
+          3
+        ],
+        "line-width": 2
+      },
+      "layout": {}
+    }
+  ]
+}

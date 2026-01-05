@@ -1,0 +1,12 @@
+node|z5-["seamark:type"=buoy].lighted::main {
+	text: "seamark:name";
+	text-color: blue;
+	icon-image: "http://example/icon.svg";
+	icon-width: 16;
+}
+
+way["seamark:type"=fairway] {
+	width: 2;
+	color: black;
+	dashes: 5, 3;
+}

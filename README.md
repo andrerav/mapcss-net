@@ -102,6 +102,37 @@ Notes:
   Override with `MapLibreStyleOptions.TextValueIsTag` if needed.
 - Unsupported properties are reported as warnings on the produced layers.
 
+## MapLibre Style Translation (AST -> Style JSON)
+
+If you want a full MapLibre style document (layers only), use `MapCssToMapLibreTranslator`.
+It compiles MapCSS AST into MapLibre layer definitions in MapCSS rule order, so you can attach
+your own sources and source-layers in the frontend.
+
+```csharp
+using MapCss.Extensions;
+
+var css = File.ReadAllText("samples/INT1_MapCSS.mapcss");
+var translator = new MapCssToMapLibreTranslator();
+
+var result = translator.Translate(css, new MapLibreTranslationOptions
+{
+    StylesheetId = "int1",
+    LayerIdPrefix = "mapcss_",
+    IconBaseSize = 16
+});
+
+var style = result.Style;     // MapLibreStyleDocument (version 8 + layers)
+var warnings = result.Warnings;
+```
+
+Notes:
+- One layer is emitted per MapCSS rule. Extra layers are created only for casing and repeat-image.
+- `set` classes are not evaluated at translation time. Precompute `class:*` boolean properties in your tiles,
+  or provide `ClassPropertyResolver` to map class names to your schema.
+- Regex selectors are dropped with warnings.
+- Geometry is inferred from selectors and properties; override with `GeometryResolver` when needed.
+- Unsupported properties or expressions fall back to literals with warnings (or throw in strict mode).
+
 ## Example: INT1_MapCSS.mapcss (seamarks)
 
 The `samples/INT1_MapCSS.mapcss` file contains rules for common seamarks. You can load the file
