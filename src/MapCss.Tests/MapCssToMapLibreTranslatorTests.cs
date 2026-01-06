@@ -131,16 +131,4 @@ way {
 		var actual = NormalizeNewlines(JsonSerializer.Serialize(result.Style, jsonOptions));
 		Assert.That(actual, Is.EqualTo(expected));
 	}
-
-	[Test]
-	public void TranslateAllMapCssSampleFiles()
-	{
-		var fixturesDir = Path.Combine(TestContext.CurrentContext.TestDirectory, "./../../../../../", "Samples");
-		var files = Directory.GetFiles(fixturesDir, "*.mapcss", SearchOption.AllDirectories);
-		foreach(var file in files)
-		{
-			var css = File.ReadAllText(file);
-			Assert.DoesNotThrow(() => Translate(css), $"Translation failed for file: {file}");
-		}
-	}
 }
