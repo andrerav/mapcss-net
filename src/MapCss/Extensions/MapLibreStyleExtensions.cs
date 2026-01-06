@@ -1,10 +1,12 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using System.Text.Json.Serialization;
 using MapCss.Styling;
 
 namespace MapCss.Extensions;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum MapLibreGeometryType
 {
 	Point,
@@ -12,6 +14,7 @@ public enum MapLibreGeometryType
 	Polygon
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum MapLibreLayerType
 {
 	Circle,
