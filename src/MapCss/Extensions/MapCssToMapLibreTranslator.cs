@@ -2614,6 +2614,9 @@ public sealed class MapCssToMapLibreTranslator
 					{
 						throw new InvalidOperationException("cond() expects at least three arguments.");
 					}
+
+					// MapCSS cond(condition, trueValue, falseValue)
+					// MapLibre expressions use ["case", condition, trueValue, falseValue]
 					return new object[] { "case", args[0], args[1], args[2] };
 				case "eval":
 					return args.Count > 0 ? args[0] : string.Empty;
@@ -2758,3 +2761,4 @@ public sealed class MapCssToMapLibreTranslator
 		public bool IsExpression { get; }
 	}
 }
+

@@ -131,4 +131,47 @@ way {
 		var actual = NormalizeNewlines(JsonSerializer.Serialize(result.Style, jsonOptions));
 		Assert.That(actual, Is.EqualTo(expected));
 	}
+
+	[Test]
+	public void CondExpressionInTextColorTranslatesIntoCaseExpression()
+	{
+		var css = "node { text-color: cond(tag(\"seamark:type\")==\"a\", darkmagenta, black); }";
+		var result = Translate(css);
+		var layer = result.Style.Layers.Single();
+
+		var expected = new object[]
+		{
+			"case",
+			new object[] { "==", new object[] { "get", "seamark:type" }, "a" },
+			"darkmagenta",
+			"black"
+		};
+
+		Assert.That(layer.Paint["text-color"], Is.EqualTo(expected));
+	}
+
+	[Test]
+	public void CondExpressionInTextColorSerializesAsJsonArray()
+	{
+		var css = "node { text-color: cond(tag(\"seamark:type\")==\"a\", darkmagenta, black); }";
+		var result = Translate(css);
+
+		var jsonOptions = new JsonSerializerOptions
+		{
+			PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+			DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+		};
+		jsonOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+
+		var json = JsonSerializer.Serialize(result.Style, jsonOptions);
+		using var doc = JsonDocument.Parse(json);
+
+		var layers = doc.RootElement.GetProperty("layers");
+		Assert.That(layers.GetArrayLength(), Is.GreaterThanOrEqualTo(1));
+
+		var paint = layers[0].GetProperty("paint");
+		var textColor = paint.GetProperty("text-color");
+		Assert.That(textColor.ValueKind, Is.EqualTo(JsonValueKind.Array));
+		Assert.That(textColor[0].GetString(), Is.EqualTo("case"));
+	}
 }
