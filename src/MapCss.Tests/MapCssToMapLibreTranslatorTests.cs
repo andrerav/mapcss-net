@@ -388,11 +388,11 @@ way {
 	[Test]
 	public void UnsupportedExpressions_FallBackToLiteralWithWarning_WhenNotStrict()
 	{
-		var css = "node { text: tag(1); }";
+		var css = "node { text: unknown_func(1); }";
 		var result = Translate(css, new MapLibreTranslationOptions { StrictExpressions = false });
 
 		var layer = result.Style.Layers.Single();
-		Assert.That(layer.Layout["text-field"], Is.EqualTo("tag(1)"));
+		Assert.That(layer.Layout["text-field"], Is.EqualTo("unknown_func(1)"));
 		Assert.That(result.Warnings.Any(w => w.Message.Contains("Unsupported expression", StringComparison.OrdinalIgnoreCase)), Is.True);
 	}
 
@@ -734,5 +734,17 @@ node {
 
 		Assert.That(result.Style.Layers.Single().Type, Is.EqualTo(MapLibreLayerType.Symbol));
 		Assert.That(result.Warnings.Any(w => w.Property == "text-position" && w.Message.Contains("Unsupported", StringComparison.OrdinalIgnoreCase)), Is.True);
+	}
+
+	[Test]
+	public void CondExpression_WithNestedConcatAndTag_IsTranslatedIntoCaseExpression()
+	{
+		var css = "node { text-color: cond(tag(concat(\"seamark:\", tag(\"seamark:type\"), \":clearance_height_safe\"))>0, darkmagenta, black); }";
+		var result = Translate(css);
+		var layer = result.Style.Layers.Single();
+
+		Assert.That(layer.Paint["text-color"], Is.InstanceOf<object[]>());
+		var expr = (object[])layer.Paint["text-color"];
+		Assert.That(expr[0], Is.EqualTo("case"));
 	}
 }

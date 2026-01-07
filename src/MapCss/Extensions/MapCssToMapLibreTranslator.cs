@@ -2574,7 +2574,9 @@ public sealed class MapCssToMapLibreTranslator
 					{
 						return new object[] { "get", tagKey };
 					}
-					throw new InvalidOperationException("tag() expects a string argument.");
+					// Support dynamic tag keys (e.g. tag(concat("seamark:", ...))) by converting the
+					// argument to a MapLibre get-expression.
+					return new object[] { "get", args[0] };
 				case "has_tag_key":
 					if (args.Count < 1)
 					{
