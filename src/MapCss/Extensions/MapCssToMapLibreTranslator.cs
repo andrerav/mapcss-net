@@ -1443,6 +1443,13 @@ public sealed class MapCssToMapLibreTranslator
 			return;
 		}
 
+		if (TryGetNumericValue(value, out var numeric) && numeric < 1)
+		{
+			AddWarning(warnings, ruleIndex, selectorIndex, "repeat-image-spacing",
+				"MapLibre symbol-spacing has a minimum value of 1; clamping.");
+			value = 1d;
+		}
+
 		builder.Layout["symbol-spacing"] = value;
 	}
 

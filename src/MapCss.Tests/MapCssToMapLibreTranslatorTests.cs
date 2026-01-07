@@ -747,4 +747,19 @@ node {
 		var expr = (object[])layer.Paint["text-color"];
 		Assert.That(expr[0], Is.EqualTo("case"));
 	}
+
+	[Test]
+	public void RepeatImageSpacing_IsClampedToMapLibreMinimum()
+	{
+		var css = @"
+way {
+	repeat-image: ""http://example/repeat.svg"";
+	repeat-image-spacing: 0;
+}";
+		var result = Translate(css);
+		var layer = result.Style.Layers.Single(l => l.Type == MapLibreLayerType.Symbol);
+
+		Assert.That(layer.Layout["symbol-spacing"], Is.EqualTo(1d));
+		Assert.That(result.Warnings.Any(w => w.Property == "repeat-image-spacing" && w.Message.Contains("minimum", StringComparison.OrdinalIgnoreCase)), Is.True);
+	}
 }
