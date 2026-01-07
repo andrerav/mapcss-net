@@ -261,4 +261,138 @@ node {
 		var symbol = GetLayer(result, MapLibreLayerType.Symbol);
 		Assert.That(symbol.Layout["text-anchor"], Is.EqualTo("center"));
 	}
+
+	[Test]
+	public void PointGeometry_LineOnlyPropertiesProduceFallbackWarnings()
+	{
+		var css = @"
+node {
+	dashes: 1, 2;
+	linecap: round;
+}";
+		var result = Evaluate(css, MapCssElementType.Node, MapLibreGeometryType.Point);
+
+		var circle = GetLayer(result, MapLibreLayerType.Circle);
+		Assert.That(circle.Paint, Is.Empty);
+		Assert.That(circle.Layout, Is.Empty);
+		Assert.That(circle.Warnings.Any(w => w.Message.Contains("No compatible layer", StringComparison.OrdinalIgnoreCase)), Is.True);
+	}
+
+	[Test]
+	public void PointGeometry_UnassignedWarningsAttachToExistingLayer()
+	{
+		var css = @"
+node {
+	text: ""name"";
+	dashes: 1, 2;
+	linecap: round;
+}";
+		var result = Evaluate(css, MapCssElementType.Node, MapLibreGeometryType.Point);
+
+		var symbol = GetLayer(result, MapLibreLayerType.Symbol);
+		Assert.That(symbol.Warnings.Any(w => w.Message.Contains("No compatible layer", StringComparison.OrdinalIgnoreCase)), Is.True);
+	}
+
+	[Test]
+	public void RepeatImageWidthWithoutIconBaseSizeEmitsScaleWarning()
+	{
+		var css = @"
+way {
+	repeat-image: ""http://example/marker.svg"";
+	repeat-image-width: 16;
+}";
+		var result = Evaluate(css, MapCssElementType.Way, MapLibreGeometryType.Line, new MapLibreStyleOptions());
+
+		var symbol = GetLayer(result, MapLibreLayerType.Symbol);
+		Assert.That(symbol.Layout["icon-size"], Is.EqualTo(16d));
+		Assert.That(symbol.Warnings.Any(w => w.MapCssProperty == "repeat-image-width" && w.Message.Contains("expects a scale", StringComparison.OrdinalIgnoreCase)), Is.True);
+	}
+
+	[Test]
+	public void TextValueIsTagOverride_ForcesGetExpression()
+	{
+		var css = "node { text: foo; }";
+		var result = Evaluate(
+			css,
+			MapCssElementType.Node,
+			MapLibreGeometryType.Point,
+			new MapLibreStyleOptions { TextValueIsTag = _ => true });
+
+		var symbol = GetLayer(result, MapLibreLayerType.Symbol);
+		Assert.That(symbol.Layout["text-field"], Is.EqualTo(new object[] { "get", "foo" }));
+	}
+
+	[Test]
+	public void IconWidthAndHeightMismatch_UsesMaxAndWarns()
+	{
+		var css = @"
+node {
+	icon-image: ""http://example/icon.svg"";
+	icon-width: 16;
+	icon-height: 32;
+}";
+		var result = Evaluate(css, MapCssElementType.Node, MapLibreGeometryType.Point, new MapLibreStyleOptions { IconBaseSize = 16 });
+		var symbol = GetLayer(result, MapLibreLayerType.Symbol);
+		Assert.That(symbol.Layout["icon-size"], Is.EqualTo(2d));
+		Assert.That(symbol.Warnings.Any(w => w.Message.Contains("max(icon-width, icon-height)", StringComparison.OrdinalIgnoreCase)), Is.True);
+	}
+
+	[Test]
+	public void RelativeNumericValuesAreParsed()
+	{
+		var css = "way { width: +2; }";
+		var result = Evaluate(css, MapCssElementType.Way, MapLibreGeometryType.Line);
+		var line = GetLayer(result, MapLibreLayerType.Line);
+		Assert.That(line.Paint["line-width"], Is.EqualTo(2d));
+	}
+
+	[Test]
+	public void ToMapLibreStyle_ThrowsOnNullInputs()
+	{
+		Assert.Throws<ArgumentNullException>(() => MapLibreStyleExtensions.ToMapLibreStyle(null!, MapLibreGeometryType.Point));
+
+		var element = new MapCssElement(MapCssElementType.Node, new Dictionary<string, string>());
+		var style = new MapCssStyleEngine("node { text: \"name\"; }").Evaluate(new MapCssQuery(element));
+		Assert.Throws<ArgumentNullException>(() => style.ToMapLibreStyle((MapCssQuery)null!));
+	}
+
+	[Test]
+	public void InvalidNumericValuesEmitWarnings()
+	{
+		var css = @"
+node {
+	text: ""name"";
+	text-position: left;
+	text-halo-radius: nope;
+	font-size: nope;
+	z-index: nope;
+	icon-image: ""http://example/icon.svg"";
+	icon-opacity: nope;
+	icon-offset-x: nope;
+	icon-offset-y: nope;
+	icon-orientation: nope;
+}";
+		var result = Evaluate(css, MapCssElementType.Node, MapLibreGeometryType.Point);
+		var symbol = GetLayer(result, MapLibreLayerType.Symbol);
+
+		Assert.That(symbol.Warnings.Any(w => w.MapCssProperty == "text-position"), Is.True);
+		Assert.That(symbol.Warnings.Any(w => w.MapCssProperty == "text-halo-radius"), Is.True);
+		Assert.That(symbol.Warnings.Any(w => w.MapCssProperty == "font-size"), Is.True);
+		Assert.That(symbol.Warnings.Any(w => w.MapCssProperty == "z-index"), Is.True);
+		Assert.That(symbol.Warnings.Any(w => w.MapCssProperty == "icon-opacity"), Is.True);
+		Assert.That(symbol.Warnings.Any(w => w.MapCssProperty == "icon-offset-x"), Is.True);
+		Assert.That(symbol.Warnings.Any(w => w.MapCssProperty == "icon-offset-y"), Is.True);
+		Assert.That(symbol.Warnings.Any(w => w.MapCssProperty == "icon-orientation"), Is.True);
+	}
+
+	[Test]
+	public void InvalidRepeatImageValuesEmitWarnings()
+	{
+		var css = "way { repeat-image-width: nope; repeat-image-spacing: nope; }";
+		var result = Evaluate(css, MapCssElementType.Way, MapLibreGeometryType.Line);
+		var symbol = GetLayer(result, MapLibreLayerType.Symbol);
+
+		Assert.That(symbol.Warnings.Any(w => w.MapCssProperty == "repeat-image-width"), Is.True);
+		Assert.That(symbol.Warnings.Any(w => w.MapCssProperty == "repeat-image-spacing"), Is.True);
+	}
 }
