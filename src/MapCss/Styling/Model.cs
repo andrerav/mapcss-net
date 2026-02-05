@@ -1,3 +1,6 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
 namespace MapCss.Styling;
 
 /// <summary>
@@ -161,20 +164,11 @@ public sealed class MapCssStyleResult
 /// </remarks>
 public sealed class MapCssStyleLayer
 {
-	internal MapCssStyleLayer(IReadOnlyDictionary<string, IReadOnlyList<MapCssValue>> properties)
+	internal MapCssStyleLayer(IReadOnlyDictionary<string, IReadOnlyList<string>> properties)
 	{
 		Properties = properties;
 	}
 
 	/// <summary>Gets the set of properties and their values for the layer.</summary>
-	public IReadOnlyDictionary<string, IReadOnlyList<MapCssValue>> Properties { get; }
-} 
-
-/// <summary>
-/// Represents a single MapCSS value as raw text.
-/// </summary>
-/// <remarks>
-/// Values are kept as text in the AST and interpretation (e.g. parsing colors or numbers)
-/// is performed when required by the rendering/evaluation logic.
-/// </remarks>
-public sealed record MapCssValue(string Text);
+	public IReadOnlyDictionary<string, IReadOnlyList<string>> Properties { get; }
+}

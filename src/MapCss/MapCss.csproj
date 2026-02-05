@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>MapCSS.NET</PackageId>
+    <Title>MapCSS.NET</Title>
+    <Description>MapCSS parser and styling engine for .NET.</Description>
+    <PackageTags>mapcss;osm;josm;parser;styling</PackageTags>
+    <IsPackable>true</IsPackable>
+    <IncludeReferencedProjects>true</IncludeReferencedProjects>
+    <RepositoryUrl>https://github.com/andrerav/mapcss-net/</RepositoryUrl>
+    <Authors>Andreas Ravnestad</Authors> 
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Antlr4.Runtime.Standard" Version="4.13.1" />
+  </ItemGroup>
+</Project>

@@ -39,8 +39,8 @@ var engine = new MapCssStyleEngine(css);
 var result = engine.Evaluate(new MapCssQuery(element, zoom: 14));
 
 // Default layer uses empty string.
-var color = result.Layers[""].Properties["color"][0].Text;
-var width = result.Layers[""].Properties["width"][0].Text;
+var color = result.Layers[""].Properties["color"][0];
+var width = result.Layers[""].Properties["width"][0];
 ```
 
 ## Using Subparts (layers)
@@ -62,12 +62,76 @@ var engine = new MapCssStyleEngine(css);
 var result = engine.Evaluate(new MapCssQuery(element, zoom: 12));
 
 // Default layer
-var riverColor = result.Layers[""].Properties["color"][0].Text;
+var riverColor = result.Layers[""].Properties["color"][0];
 
 // Subpart layer
 var outlineLayer = result.Layers["outline"];
-var casingColor = outlineLayer.Properties["casing-color"][0].Text;
+var casingColor = outlineLayer.Properties["casing-color"][0];
 ```
+
+## MapLibre Style Conversion
+
+If you want MapLibre-friendly paint/layout objects, use the extension method in `MapCss.Extensions`.
+It converts a `MapCssStyleResult` into a `MapLibreStyleResult` with layers grouped by subpart.
+
+```csharp
+using MapCss.Extensions;
+using MapCss.Styling;
+
+var element = new MapCssElement(
+    MapCssElementType.Node,
+    new Dictionary<string, string> { ["seamark:name"] = "Alpha" });
+
+var engine = new MapCssStyleEngine("node { text: \"seamark:name\"; symbol-size: 4; color: red; }");
+var result = engine.Evaluate(new MapCssQuery(element, zoom: 15));
+
+// Choose geometry explicitly
+var maplibre = result.ToMapLibreStyle(MapLibreGeometryType.Point);
+
+// Or infer geometry from the query element type
+var maplibre2 = result.ToMapLibreStyle(new MapCssQuery(element));
+
+var symbolLayer = maplibre.Layers[""].Single(x => x.LayerType == MapLibreLayerType.Symbol);
+var textField = symbolLayer.Layout["text-field"]; // ["get", "seamark:name"]
+```
+
+Notes:
+- Icon URLs are kept as-is. MapLibre requires you to register images via sprite or `addImage`.
+- `MapLibreStyleOptions.IconBaseSize` converts pixel widths/heights into MapLibre `icon-size` scale.
+- Text values are treated as tag lookups when they look like tag keys (`seamark:name`, `depth`, `name`, etc.).
+  Override with `MapLibreStyleOptions.TextValueIsTag` if needed.
+- Unsupported properties are reported as warnings on the produced layers.
+
+## MapLibre Style Translation (AST -> Style JSON)
+
+If you want a full MapLibre style document (layers only), use `MapCssToMapLibreTranslator`.
+It compiles MapCSS AST into MapLibre layer definitions in MapCSS rule order, so you can attach
+your own sources and source-layers in the frontend.
+
+```csharp
+using MapCss.Extensions;
+
+var css = File.ReadAllText("samples/INT1_MapCSS.mapcss");
+var translator = new MapCssToMapLibreTranslator();
+
+var result = translator.Translate(css, new MapLibreTranslationOptions
+{
+    StylesheetId = "int1",
+    LayerIdPrefix = "mapcss_",
+    IconBaseSize = 16
+});
+
+var style = result.Style;     // MapLibreStyleDocument (version 8 + layers)
+var warnings = result.Warnings;
+```
+
+Notes:
+- One layer is emitted per MapCSS rule. Extra layers are created only for casing and repeat-image.
+- `set` classes are not evaluated at translation time. Precompute `class:*` boolean properties in your tiles,
+  or provide `ClassPropertyResolver` to map class names to your schema.
+- Regex selectors are dropped with warnings.
+- Geometry is inferred from selectors and properties; override with `GeometryResolver` when needed.
+- Unsupported properties or expressions fall back to literals with warnings (or throw in strict mode).
 
 ## Example: INT1_MapCSS.mapcss (seamarks)
 
@@ -91,7 +155,7 @@ var harbour = new MapCssElement(
     });
 
 var harbourResult = engine.Evaluate(new MapCssQuery(harbour, zoom: 15));
-var harbourIcon = harbourResult.Layers["int1_harbour"].Properties["icon-image"][0].Text;
+var harbourIcon = harbourResult.Layers["int1_harbour"].Properties["icon-image"][0];
 
 // Fishing harbour category (uses set harbour -> class for the follow-up rule)
 var fishingHarbour = new MapCssElement(
@@ -103,7 +167,7 @@ var fishingHarbour = new MapCssElement(
     });
 
 var fishingResult = engine.Evaluate(new MapCssQuery(fishingHarbour));
-var fishingIcon = fishingResult.Layers["int1_harbour"].Properties["icon-image"][0].Text;
+var fishingIcon = fishingResult.Layers["int1_harbour"].Properties["icon-image"][0];
 
 // Mooring seamark (non-buoy)
 var mooring = new MapCssElement(
@@ -116,8 +180,8 @@ var mooring = new MapCssElement(
 
 var mooringResult = engine.Evaluate(new MapCssQuery(mooring));
 var mooringLayer = mooringResult.Layers["int1_mooring"];
-var mooringShape = mooringLayer.Properties["symbol-shape"][0].Text;
-var mooringSize = mooringLayer.Properties["symbol-size"][0].Text;
+var mooringShape = mooringLayer.Properties["symbol-shape"][0];
+var mooringSize = mooringLayer.Properties["symbol-size"][0];
 
 // Landmark seamark (church)
 var landmark = new MapCssElement(
@@ -129,7 +193,7 @@ var landmark = new MapCssElement(
     });
 
 var landmarkResult = engine.Evaluate(new MapCssQuery(landmark));
-var landmarkIcon = landmarkResult.Layers["int1_landmark"].Properties["icon-image"][0].Text;
+var landmarkIcon = landmarkResult.Layers["int1_landmark"].Properties["icon-image"][0];
 ```
 
 ## Parent/Child (combinators) and Link Tags
@@ -158,7 +222,7 @@ var wayCtx = new MapCssContext(
 
 var engine = new MapCssStyleEngine(css);
 var result = engine.Evaluate(new MapCssQuery(wayCtx));
-var width = result.Layers[""].Properties["width"][0].Text;
+var width = result.Layers[""].Properties["width"][0];
 ```
 
 ## Classes, Pseudo-classes, and `set`
@@ -185,7 +249,7 @@ var result = engine.Evaluate(new MapCssQuery(element));
 
 // "border" is added via `set`
 var classes = result.Classes; // contains "border"
-var borderColor = result.Layers["int1_border"].Properties["color"][0].Text;
+var borderColor = result.Layers["int1_border"].Properties["color"][0];
 ```
 
 ## Expression Evaluation in Property Values
@@ -209,8 +273,8 @@ var element = new MapCssElement(
 var engine = new MapCssStyleEngine(css);
 var result = engine.Evaluate(new MapCssQuery(element));
 
-var text = result.Layers[""].Properties["text"][0].Text;       // "Depth: 12"
-var color = result.Layers[""].Properties["text-color"][0].Text; // "red"
+var text = result.Layers[""].Properties["text"][0];       // "Depth: 12"
+var color = result.Layers[""].Properties["text-color"][0]; // "red"
 ```
 
 The goal over time is to fully support the expression evaluation semantics in MapCss. See [ROADMAP.md](ROADMAP.md) for details. 
@@ -245,6 +309,4 @@ parser sources so coverage focuses on handwritten code.
 ## Notes
 
 - The parser and selector matcher aim to be compatible with common JOSM MapCSS constructs.
-- Property values are evaluated to strings by the expression evaluator; if you need typed values,
-  you can parse `MapCssValue.Text` in your application.
 - The engine is deterministic and does not load external resources (icons, images, etc.).

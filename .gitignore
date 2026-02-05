@@ -420,3 +420,4 @@ FodyWeavers.xsd
 coverage-report/
 tools/tmp/
 tools/antlr/
+Plans/*

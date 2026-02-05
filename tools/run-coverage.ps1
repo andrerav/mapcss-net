@@ -1,5 +1,5 @@
 # Runs tests with coverage collection and generates reports (HTML + text summary)
-$proj = "src\MapCss.Styling.Tests\MapCss.Styling.Tests.csproj"
+$proj = "src\MapCss.Tests\MapCss.Tests.csproj"
 $resultsDir = "tools\tmp\TestResults"
 $reportDir = "tools\tmp\coverage-report"
 
@@ -16,14 +16,15 @@ if (-not $coverage) {
     exit 1
 }
 
-# Remove classes from generated files to avoid counting generated parser code in coverage
+# Remove classes from generated files (ANTLR output) to avoid counting generated parser code in coverage
 $xml = [xml](Get-Content $coverage.FullName)
 $ns = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
 $ns.AddNamespace("c", $xml.DocumentElement.NamespaceURI)
 
 foreach ($classNode in $xml.SelectNodes('//class')) {
     $filename = $classNode.GetAttribute('filename')
-    if ($filename -like '*Generated\*' -or $filename -like '*Generated/*') {
+    if ($filename -like '*Generated\*' -or $filename -like '*Generated/*' -or
+        $filename -like '*Parser\*' -or $filename -like '*Parser/*') {
         $parent = $classNode.ParentNode
         $parent.RemoveChild($classNode) | Out-Null
     }

@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
+	  <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+	  <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
@@ -20,12 +20,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Using Include="NUnit.Framework" />
+    <ProjectReference Include="..\MapCss\MapCss.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-	  <ProjectReference Include="..\MapCss.Parser\MapCss.Parser.csproj" />
-	  <ProjectReference Include="..\MapCss.Styling\MapCss.Styling.csproj" />
+    <None Update="Fixtures\TranslatorSample.mapcss">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Fixtures\TranslatorSample.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="NUnit.Framework" />
   </ItemGroup>
 
 </Project>
